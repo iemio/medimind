@@ -1,7 +1,9 @@
 import React from "react";
 
-const Dshboard = () => {
-    return <div>Hello for doctor</div>;
+const page = () => {
+    //redirect to /patient/dashboard/overview
+
+    return <div></div>;
 };
 
-export default Dshboard;
+export default page;

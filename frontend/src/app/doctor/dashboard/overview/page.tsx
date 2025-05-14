@@ -10,11 +10,11 @@ export default function Page() {
                 <div className="space-y-1">
                     <h1 className="text-2xl font-semibold">Oilà, Larry!</h1>
                     <p className="text-sm text-muted-foreground">
-                        Here&rsquo;s an overview of your appointments. Create
-                        new ones with ease!
+                        Here&rsquo;s an overview of your appointments. Manage
+                        with ease!
                     </p>
                 </div>
-                <Button className="px-3">Create Appointment</Button>
+                <Button className="px-3">Add Contact</Button>
             </div>
             {/* Numbers */}
             <StatsGrid
