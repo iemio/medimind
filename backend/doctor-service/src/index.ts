@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import axios from "axios";
 import cors from "cors";
 import express from "express";
+import "dotenv/config";
 
 const app = express();
 const PORT = process.env.PORT || 3002;

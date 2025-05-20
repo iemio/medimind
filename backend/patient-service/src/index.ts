@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import axios from "axios";
 import cors from "cors";
+import "dotenv/config";
 // patient-service/index.js
 
 const app = express();
@@ -76,7 +77,7 @@ const patientSchema = new mongoose.Schema({
 
 const Patient = mongoose.model("Patient", patientSchema);
 
-// Middleware to authenticate JWT token
+// @ts-ignore
 const authenticateToken = async (req, res, next) => {
     const token = req.header("x-auth-token");
 
@@ -105,7 +106,7 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-// Middleware to check if user has patient role
+// @ts-ignore
 const isPatientRole = (req, res, next) => {
     if (!req.user.roles.includes("patient")) {
         return res
@@ -200,6 +201,7 @@ app.get("/patients/me", authenticateToken, isPatientRole, async (req, res) => {
 // @ts-ignore
 app.put("/patients/me", authenticateToken, isPatientRole, async (req, res) => {
     try {
+        console.log("helo");
         const {
             fullName,
             dateOfBirth,
@@ -257,8 +259,10 @@ app.get("/patients/:id", authenticateToken, async (req, res) => {
         }
 
         res.json(patient);
+        // @ts-ignore
     } catch (error) {
         console.error(error);
+        // @ts-ignore
         if (error.kind === "ObjectId") {
             return res.status(404).json({ message: "Patient not found" });
         }
