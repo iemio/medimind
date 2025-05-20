@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { StatsGrid } from "@/components/stats-grid";
 import AppointmentsTable from "@/features/admin/components/appointments-table";
 

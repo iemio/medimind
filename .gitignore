@@ -1,2 +1,5 @@
 .DS_Store
 todo.md
+.env
+.env.local
+backend-c/
