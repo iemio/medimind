@@ -25,7 +25,7 @@ export const authenticateToken = async (
         }
 
         const token = authHeader.split(" ")[1];
-
+        console.log(token);
         // Validate token with Auth Service
         const userData = await authService.validateToken(token);
 

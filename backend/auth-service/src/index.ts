@@ -5,10 +5,11 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import cors from "cors";
 import { Request, Response } from "express";
+
+import "dotenv/config";
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
-import "dotenv/config";
 app.use(express.json());
 app.use(cors());
 
@@ -193,23 +194,23 @@ app.put("/users/:id/roles", async (req: any, res: any) => {
 });
 
 // @ts-ignore
-// app.post("/validate-token", (req: any, res: any) => {
-//     const authHeader = req.headers["authorization"];
-//     const token = authHeader.split(" ")[1];
+app.post("/validate-token", (req: any, res: any) => {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader.split(" ")[1];
 
-//     if (!token) {
-//         return res
-//             .status(401)
-//             .json({ message: "No token, authorization denied" });
-//     }
-//     console.log(token);
-//     try {
-//         const decoded = jwt.verify(token, JWT_SECRET!);
-//         res.json(decoded);
-//     } catch (error) {
-//         res.status(401).json({ message: "Token is not valid" });
-//     }
-// });
+    if (!token) {
+        return res
+            .status(401)
+            .json({ message: "No token, authorization denied" });
+    }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET!);
+        console.log(decoded);
+        res.json(decoded);
+    } catch (error) {
+        res.status(401).json({ message: "Token is not valid" });
+    }
+});
 
 // @ts-ignore
 const auth = (req, res, next) => {
@@ -242,168 +243,171 @@ app.get("/user", auth, async (req, res) => {
 //inter service started
 // Create service authentication credentials
 // This is an admin-only route that should be properly secured in production
-app.post("/services/register", async (req, res) => {
-    try {
-        const { serviceId, serviceSecret, description } = req.body;
 
-        // Check if service already exists
-        let service = await Service.findOne({ serviceId });
-        if (service) {
-            return res
-                .status(400)
-                .json({ message: "Service already registered" });
-        }
+// app.post("/services/register", async (req, res) => {
+//     try {
+//         const { serviceId, serviceSecret, description } = req.body;
 
-        // Hash service secret
-        const salt = await bcrypt.genSalt(10);
-        const hashedSecret = await bcrypt.hash(serviceSecret, 12);
+//         // Check if service already exists
+//         let service = await Service.findOne({ serviceId });
+//         if (service) {
+//             return res
+//                 .status(400)
+//                 .json({ message: "Service already registered" });
+//         }
 
-        // Create new service
-        service = new Service({
-            serviceId,
-            serviceSecret: hashedSecret,
-            description,
-        });
+//         // Hash service secret
+//         const salt = await bcrypt.genSalt(10);
+//         const hashedSecret = await bcrypt.hash(serviceSecret, 12);
 
-        await service.save();
+//         // Create new service
+//         service = new Service({
+//             serviceId,
+//             serviceSecret: hashedSecret,
+//             description,
+//         });
 
-        res.status(201).json({
-            message: "Service registered successfully",
-            serviceId: service.serviceId,
-        });
-    } catch (error) {
-        console.error("Error registering service:", error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+//         await service.save();
+
+//         res.status(201).json({
+//             message: "Service registered successfully",
+//             serviceId: service.serviceId,
+//         });
+//     } catch (error) {
+//         console.error("Error registering service:", error);
+//         res.status(500).json({ message: "Server Error" });
+//     }
+// });
 
 // Generate service token for inter-service communication
-app.post("/service-token", async (req, res) => {
-    try {
-        const { serviceId, serviceSecret } = req.body;
+// app.post("/service-token", async (req, res) => {
+//     try {
+//         const { serviceId, serviceSecret } = req.body;
 
-        // Validate required fields
-        if (!serviceId || !serviceSecret) {
-            return res
-                .status(400)
-                .json({ message: "Service ID and secret required" });
-        }
+//         // Validate required fields
+//         if (!serviceId || !serviceSecret) {
+//             return res
+//                 .status(400)
+//                 .json({ message: "Service ID and secret required" });
+//         }
 
-        // Find service
-        const service = await Service.findOne({ serviceId });
-        if (!service) {
-            return res
-                .status(401)
-                .json({ message: "Invalid service credentials" });
-        }
+//         // Find service
+//         const service = await Service.findOne({ serviceId });
+//         if (!service) {
+//             return res
+//                 .status(401)
+//                 .json({ message: "Invalid service credentials" });
+//         }
 
-        // Verify service secret
-        const isMatch = await bcrypt.compare(
-            serviceSecret,
-            service.serviceSecret
-        );
-        if (!isMatch) {
-            return res
-                .status(401)
-                .json({ message: "Invalid service credentials" });
-        }
+//         // Verify service secret
+//         const isMatch = await bcrypt.compare(
+//             serviceSecret,
+//             service.serviceSecret
+//         );
+//         if (!isMatch) {
+//             return res
+//                 .status(401)
+//                 .json({ message: "Invalid service credentials" });
+//         }
 
-        // Generate service JWT with elevated privileges
-        // Service tokens have a longer expiry and special service role
-        const token = jwt.sign(
-            {
-                id: service._id,
-                serviceId: service.serviceId,
-                isService: true,
-                roles: ["service", "admin"], // Services get admin privileges for cross-service operations
-            },
-            JWT_SECRET!,
-            { expiresIn: "24h" } // Longer expiry for services
-        );
+//         // Generate service JWT with elevated privileges
+//         // Service tokens have a longer expiry and special service role
+//         const token = jwt.sign(
+//             {
+//                 id: service._id,
+//                 serviceId: service.serviceId,
+//                 isService: true,
+//                 roles: ["service", "admin"], // Services get admin privileges for cross-service operations
+//             },
+//             JWT_SECRET!,
+//             { expiresIn: "24h" } // Longer expiry for services
+//         );
 
-        res.json({
-            token,
-            service: {
-                serviceId: service.serviceId,
-            },
-        });
-    } catch (error) {
-        console.error("Error generating service token:", error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+//         res.json({
+//             token,
+//             service: {
+//                 serviceId: service.serviceId,
+//             },
+//         });
+//     } catch (error) {
+//         console.error("Error generating service token:", error);
+//         res.status(500).json({ message: "Server Error" });
+//     }
+// });
 
-// Update the validate-token endpoint to handle service tokens
-app.post("/validate-token", (req, res) => {
-    const authHeader = req.headers["authorization"];
-    if (!authHeader) {
-        return res
-            .status(401)
-            .json({ message: "No token, authorization denied" });
-    }
+// @ts-ignore
+// app.post("/validate-token", (req, res) => {
+//     const authHeader = req.headers["authorization"];
+//     if (!authHeader) {
+//         return res
+//             .status(401)
+//             .json({ message: "No token, authorization denied" });
+//     }
 
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-        return res
-            .status(401)
-            .json({ message: "No token, authorization denied" });
-    }
+//     const token = authHeader.split(" ")[1];
+//     if (!token) {
+//         return res
+//             .status(401)
+//             .json({ message: "No token, authorization denied" });
+//     }
 
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET!);
-        res.json(decoded);
-    } catch (error) {
-        res.status(401).json({ message: "Token is not valid" });
-    }
-});
+//     try {
+//         console.log("hhh");
+//         const decoded = jwt.verify(token, JWT_SECRET!);
+//         console.log(decoded);
+//         res.json(decoded);
+//     } catch (error) {
+//         res.status(401).json({ message: "Token is not valid" });
+//     }
+// });
 
-// Add a route to get user by ID (for notification service to fetch user emails)
-app.get("/users/:id", async (req, res) => {
-    try {
-        // Get token from authorization header
-        const authHeader = req.headers["authorization"];
-        if (!authHeader) {
-            return res
-                .status(401)
-                .json({ message: "No token, authorization denied" });
-        }
+// @ts-ignore
+// app.get("/users/:id", async (req, res) => {
+//     try {
+//         // Get token from authorization header
+//         const authHeader = req.headers["authorization"];
+//         if (!authHeader) {
+//             return res
+//                 .status(401)
+//                 .json({ message: "No token, authorization denied" });
+//         }
 
-        const token = authHeader.split(" ")[1];
-        if (!token) {
-            return res
-                .status(401)
-                .json({ message: "No token, authorization denied" });
-        }
+//         const token = authHeader.split(" ")[1];
+//         if (!token) {
+//             return res
+//                 .status(401)
+//                 .json({ message: "No token, authorization denied" });
+//         }
 
-        // Verify token
-        try {
-            const decoded = jwt.verify(token, JWT_SECRET!);
+//         // Verify token
+//         try {
+//             const decoded = jwt.verify(token, JWT_SECRET!);
 
-            // Only allow access if token is from a service or the user themselves
-            if (
-                !decoded.isService &&
-                decoded.id !== req.params.id &&
-                !decoded.roles.includes("admin")
-            ) {
-                return res.status(403).json({
-                    message: "Not authorized to access this resource",
-                });
-            }
-        } catch (error) {
-            return res.status(401).json({ message: "Token is not valid" });
-        }
+//             // Only allow access if token is from a service or the user themselves
+//             if (
+//                 !decoded.isService &&
+//                 decoded.id !== req.params.id &&
+//                 !decoded.roles.includes("admin")
+//             ) {
+//                 return res.status(403).json({
+//                     message: "Not authorized to access this resource",
+//                 });
+//             }
+//         } catch (error) {
+//             return res.status(401).json({ message: "Token is not valid" });
+//         }
 
-        const user = await User.findById(req.params.id).select("-password");
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+//         const user = await User.findById(req.params.id).select("-password");
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
 
-        res.json(user);
-    } catch (error) {
-        console.error("Error fetching user:", error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+//         res.json(user);
+//     } catch (error) {
+//         console.error("Error fetching user:", error);
+//         res.status(500).json({ message: "Server Error" });
+//     }
+// });
 
 app.listen(PORT, () => {
     console.log(`Auth Service running on port ${PORT}`);

@@ -24,6 +24,7 @@ export class PatientController {
             }
 
             const token = req.headers.authorization?.split(" ")[1] || "";
+            console.log(token);
             const patient = await patientService.createPatient(
                 req.user.id,
                 req.body,
