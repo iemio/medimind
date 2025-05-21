@@ -14,6 +14,10 @@ const DOCTOR_SERVICE_URL =
 const PATIENT_SERVICE_URL =
     process.env.PATIENT_SERVICE_URL || "http://localhost:3003";
 
+const NOTIFICATION_SERVICE_URL =
+    process.env.NOTIFICATION_SERVICE_URL || "http://localhost:3005";
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "your-webhook-secret"; // Should match in notification service
+
 app.use(express.json());
 app.use(cors());
 
@@ -77,6 +81,26 @@ const appointmentSchema = new mongoose.Schema({
 });
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);
+
+// Add this helper function to send notifications
+const sendNotification = async (eventType, appointmentId) => {
+    try {
+        await axios.post(
+            `${NOTIFICATION_SERVICE_URL}/notifications/webhook`,
+            {
+                eventType,
+                appointmentData: appointmentId,
+            },
+            {
+                headers: {
+                    "x-webhook-secret": WEBHOOK_SECRET,
+                },
+            }
+        );
+    } catch (error) {
+        console.error("Error sending notification webhook:", error);
+    }
+};
 
 // Middleware to authenticate JWT token
 const authenticateToken = async (req, res, next) => {
@@ -244,6 +268,9 @@ app.post(
 
             await appointment.save();
 
+            // Send notification webhook
+            await sendNotification("appointment_requested", appointment._id);
+
             res.status(201).json({
                 message: "Appointment request submitted successfully",
                 appointment,
@@ -317,7 +344,7 @@ app.put(
             }
 
             // Check doctor availability for new timeslot
-            const token = req.headers.authorization.split(" ")[1];
+            const token = req.headers.authorization?.split(" ")[1];
             const availabilityCheck = await checkDoctorAvailability(
                 appointment.doctorId,
                 appointmentDate,
@@ -340,6 +367,13 @@ app.put(
             appointment.updatedAt = new Date();
 
             await appointment.save();
+
+            // Send notification webhook
+            const notificationType =
+                status === "rescheduled"
+                    ? "appointment_rescheduled"
+                    : "appointment_scheduled";
+            await sendNotification(notificationType, appointment._id);
 
             res.json({
                 message: `Appointment ${
@@ -383,6 +417,9 @@ app.put("/appointments/:id/cancel", authenticateToken, async (req, res) => {
             : `Cancelled by ${req.user.roles.join(", ")}`;
 
         await appointment.save();
+
+        // Send notification webhook
+        await sendNotification("appointment_cancelled", appointment._id);
 
         res.json({
             message: "Appointment cancelled successfully",
