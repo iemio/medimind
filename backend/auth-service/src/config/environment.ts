@@ -8,9 +8,9 @@ const envSchema = z.object({
     NODE_ENV: z
         .enum(["development", "production", "test"])
         .default("development"),
-    PORT: z.string().default("3003"),
+    PORT: z.string().default("3001"),
     MONGO_URI: z.string(),
-    AUTH_SERVICE_URL: z.string().default("http://localhost:3001/auth"),
+    JWT_SECRET: z.string().default("your_secret_key"),
 });
 
 // Validate environment variables against the schema

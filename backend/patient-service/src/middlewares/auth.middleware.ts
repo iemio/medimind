@@ -54,7 +54,6 @@ export const hasRole = (role: string) => {
             );
             return;
         }
-
         if (!req.user.roles.includes(role)) {
             logger.warn(`Access denied. ${role} role required.`, {
                 userId: req.user.id,
