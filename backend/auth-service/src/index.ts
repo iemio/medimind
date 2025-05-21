@@ -96,6 +96,7 @@ app.post("/register", async (req: any, res: any) => {
 // @ts-ignore
 app.post("/login", async (req: any, res: any) => {
     try {
+        console.log("aaa");
         const { email, password } = req.body;
 
         // Check if user exists
@@ -172,14 +173,15 @@ app.put("/users/:id/roles", async (req: any, res: any) => {
 
 // @ts-ignore
 app.post("/validate-token", (req: any, res: any) => {
-    const token = req.header("x-auth-token");
+    const authHeader = req.headers["authorization"];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
         return res
             .status(401)
             .json({ message: "No token, authorization denied" });
     }
-
+    console.log(token);
     try {
         const decoded = jwt.verify(token, JWT_SECRET!);
         res.json(decoded);

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import "dotenv/config";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,13 +26,16 @@ const authenticateToken = (req, res, next) => {
         return next();
     }
 
-    const token = req.header("x-auth-token");
+    const authHeader = req.headers["authorization"];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
         return res
             .status(401)
             .json({ message: "No token, authorization denied" });
     }
+
+    console.log(token);
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET!);
@@ -79,7 +83,10 @@ app.use(
         onProxyReq: (proxyReq, req) => {
             // Pass the user token if available
             if (req.user) {
-                proxyReq.setHeader("x-auth-token", req.header("x-auth-token"));
+                proxyReq.setHeader(
+                    "Authorization",
+                    req.header("Authorization")
+                );
             }
         },
     })
@@ -117,7 +124,10 @@ app.use(
         onProxyReq: (proxyReq, req) => {
             // Pass the user token if available
             if (req.user) {
-                proxyReq.setHeader("x-auth-token", req.header("x-auth-token"));
+                proxyReq.setHeader(
+                    "Authorization",
+                    req.header("Authorization")
+                );
             }
         },
     })
@@ -160,7 +170,10 @@ app.use(
         onProxyReq: (proxyReq, req) => {
             // Pass the user token if available
             if (req.user) {
-                proxyReq.setHeader("x-auth-token", req.header("x-auth-token"));
+                proxyReq.setHeader(
+                    "Authorization",
+                    req.header("Authorization")
+                );
             }
         },
     })

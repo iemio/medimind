@@ -79,7 +79,8 @@ const Patient = mongoose.model("Patient", patientSchema);
 
 // @ts-ignore
 const authenticateToken = async (req, res, next) => {
-    const token = req.header("x-auth-token");
+    const authHeader = req.headers["authorization"];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
         return res
@@ -94,7 +95,7 @@ const authenticateToken = async (req, res, next) => {
             {},
             {
                 headers: {
-                    "x-auth-token": token,
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -139,7 +140,9 @@ app.post("/patients", authenticateToken, async (req, res) => {
                     },
                     {
                         headers: {
-                            "x-auth-token": req.header("x-auth-token"),
+                            Authorization: `Bearer ${
+                                req.header("authorization")?.split(" ")[1]
+                            }`,
                         },
                     }
                 );
@@ -182,6 +185,7 @@ app.post("/patients", authenticateToken, async (req, res) => {
 
 // @ts-ignore
 app.get("/patients/me", authenticateToken, isPatientRole, async (req, res) => {
+    console.log("aa");
     try {
         const patient = await Patient.findOne({ userId: req.user?.id });
 

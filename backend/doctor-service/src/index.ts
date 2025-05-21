@@ -62,7 +62,8 @@ const Doctor = mongoose.model("Doctor", doctorSchema);
 
 // Middleware to authenticate JWT token
 const authenticateToken = async (req, res, next) => {
-    const token = req.header("x-auth-token");
+    const authHeader = req.headers["authorization"];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
         return res
@@ -77,7 +78,7 @@ const authenticateToken = async (req, res, next) => {
             {},
             {
                 headers: {
-                    "x-auth-token": token,
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -121,7 +122,9 @@ app.post("/doctors", authenticateToken, async (req, res) => {
                     },
                     {
                         headers: {
-                            "x-auth-token": req.header("x-auth-token"),
+                            Authorization: `Bearer ${
+                                req.header("authorization")?.split(" ")[1]
+                            }`,
                         },
                     }
                 );
@@ -245,6 +248,10 @@ app.get("/doctors/:id", async (req, res) => {
         }
         res.status(500).json({ message: "Server Error" });
     }
+});
+
+app.get("/health", (req, res) => {
+    res.json({ status: "ok", service: "admin-service" });
 });
 
 app.listen(PORT, () => {
