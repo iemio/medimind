@@ -1,8 +1,9 @@
 //landing-page
+import { HeroSection } from "@/components/pages/landing";
 import React from "react";
 
 const page = () => {
-    return <div></div>;
+    return <HeroSection />;
 };
 
 export default page;
